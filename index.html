@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Сверка табеля с графиком v1.0</title>
+</head>
+<body>
+    <style>
+        body{margin: 0;padding: 0;background-color: #e7e7e7; --gray: #454545;color: var(--gray);font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif}
+        form{
+            background-color: white;
+            border-radius: 2em;
+            width: 350px;
+            box-sizing: border-box;
+            margin: 2em auto;
+            padding: 2em;
+            position: relative;
+        }
+        button{
+            font-weight: 600;
+            padding: 1em 2.5em;
+            border: none;
+            border-radius: 2em;
+            display: block;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-weight: bold;
+            color: var(--gray);
+            text-transform: uppercase;
+        }
+            button:hover{cursor: pointer;opacity: .8;}
+
+        label{display: block; margin-bottom: 1em;}
+        input{display: block;margin-top: .5em;}
+
+        #corrects_add_btn{margin-left: auto;margin-bottom: 1em; background-color: #e4d5a3;}
+        #check_btn{margin: 2em auto 0;background-color: #bde4a3;}
+
+        #report{max-width: 80%; margin: auto;}
+        h3{margin-bottom: 0;}
+        .green{color: #6f9b51}
+        .red{color: #9b5151}
+        #update{width: 3em; transition: .2s; position: absolute;left: 370px;top: 20px; fill: var(--gray);}
+        #update:hover{cursor: pointer;transform: rotate(180deg);}
+
+        #month{display: block;margin-top: .5em;}
+
+        .corrects_item{
+            display: flex;
+            position: relative;
+        }
+        #delete_correct_btn{flex: 1;position: absolute;right: 0;width: 40px;height: 40px;transition: .2s;}
+        #delete_correct_btn:hover{cursor: pointer; transform: rotate(90deg);}
+        #delete_correct_btn svg{fill: var(--gray);}
+
+        #loader {
+            width: 48px;
+            height: 48px;
+            border: 8px dotted var(--gray);
+            border-radius: 50%;
+            display: block;
+            position: relative;
+            box-sizing: border-box;
+            animation: rotation 2s linear infinite;
+            margin: 2em auto 0;
+        }
+        @keyframes rotation {0% {transform: rotate(0deg);}100% {transform: rotate(360deg);}} 
+    </style>
+    <form>
+        <svg viewBox="0 0 24 24" id="update" xmlns="http://www.w3.org/2000/svg" onclick="window.location.reload()">
+            <path id="primary" d="M4,12A8,8,0,0,1,18.93,8" style="fill: none; stroke: var(--gray); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path>
+            <path id="primary-2" data-name="primary" d="M20,12A8,8,0,0,1,5.07,16" style="fill: none; stroke: var(--gray); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path>
+            <polyline id="primary-3" data-name="primary" points="14 8 19 8 19 3" style="fill: none; stroke: var(--gray); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></polyline>
+            <polyline id="primary-4" data-name="primary" points="10 16 5 16 5 21" style="fill: none; stroke: var(--gray); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></polyline>
+        </svg>
+        <!--<p class="red">не забыть раскоментить подстановку даты</p>-->
+        <label>
+            Месяц
+            <select id="month">
+                <option value="0">Январь</option>
+                <option value="1">Февраль</option>
+                <option value="2">Март</option>
+                <option value="3">Апрель</option>
+                <option value="4">Май</option>
+                <option value="5">Июнь</option>
+                <option value="6">Июль</option>
+                <option value="7">Август</option>
+                <option value="8">Сентябрь</option>
+                <option value="9">Октябрь</option>
+                <option value="10">Ноябрь</option>
+                <option value="11">Декабрь</option>
+            </select>
+        </label>
+        <label>
+            График
+            <input id="first_grafic" type="file" data-type="grafic">
+        </label>
+        <label>
+            Табель
+            <input id="tabel" type="file" data-type="tabel">
+        </label>
+
+        <button id='corrects_add_btn'><b>+</b>1 Индивидуальный</button>
+        <div id="corrects"></div>
+
+        <button id='check_btn'>Проверить</button>
+        <span id="loader" style="display: none;"></span>
+    </form>
+
+    <div id="report"></div>
+
+    <script>
+        let date = new Date()
+        document.getElementById('month').value = date.getMonth()
+    </script>
+    <script src="build-process.js"></script>
+    <script>
+        function update_delete_btn(del_btn = true){
+            //удалять текущую кнопку
+            if(del_btn && corrects_amount>1) document.getElementById('delete_correct_btn').remove()
+            //добавлять кнопку последнему элементу
+            if(corrects_amount>0){
+                let div = document.createElement('div')
+                div.setAttribute('id', 'delete_correct_btn')
+                div.setAttribute('onclick', 'do_delete_correct()')
+                div.innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm3.707,12.293a1,1,0,1,1-1.414,1.414L12,13.414,9.707,15.707a1,1,0,0,1-1.414-1.414L10.586,12,8.293,9.707A1,1,0,0,1,9.707,8.293L12,10.586l2.293-2.293a1,1,0,0,1,1.414,1.414L13.414,12Z"/></svg>`
+                corrects.children[corrects.children.length-1].append(div)
+            }
+        }
+
+        function do_delete_correct(){
+            if(corrects_amount>0){
+                corrects.children[corrects.children.length-1].remove()
+                corrects_amount--
+                update_delete_btn(false)
+            }
+        }
+    </script>
+    <style>
+        #popup{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, .2);
+            z-index: 2;
+            position: fixed;
+            top: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+        #popup div{
+            background-color: white;
+            border-radius: 2em;
+            padding: 1em 2em 2em;
+        }
+        #popup select{
+            width: 200px;
+            margin-bottom: 2em;
+        }
+
+    </style>
+    <!--
+    <div id="popup">
+        <div>
+            <p>Выбери вкладку основного графика,<br>которую нужно проверить</p>
+            <select>
+                <option value="0">Gthdsq</option>
+                <option value="1">Второй</option>
+            </select>
+            <button>Подтвердить</button>
+        </div>
+    </div>
+    -->
+</body>
+</html>

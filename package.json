@@ -1,0 +1,21 @@
+{
+  "name": "electrontabelgrafic",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron .",
+    "packager": "electron-packager ./ --platform=win32"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@electron/rebuild": "^3.2.13",
+    "electron": "^25.0.1",
+    "electron-packager": "^17.1.1"
+  },
+  "dependencies": {
+    "node-xlsx": "^0.23.0"
+  }
+}
